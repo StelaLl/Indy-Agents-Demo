@@ -1,0 +1,349 @@
+version: '3'
+
+networks:
+  services:
+    ipam:
+      config:
+        - subnet: 173.17.0.0/24
+
+services:
+
+  # #
+  # #Client
+  # #
+  # Client:
+  #   image: indy-node
+  #   command: 'bash -c ''./scripts/start_client.sh'''
+  #   environment:
+  #     - IP=${IP}
+  #     - IPS=${IPS}
+  #     - DOCKERHOST=${DOCKERHOST}
+  #     - RUST_LOG=${RUST_LOG} 
+  #   networks:
+  #     - indy-agent-net
+  #   volumes:
+  #      - client-data:/home/indy/.indy_client
+  #      - ./tmp:/tmp
+        
+  #
+  # Webserver
+  #
+  webserver:
+    image: indy-node
+    build:
+      context: .
+      dockerfile: pool.dockerfile
+    command: 'bash -c ''sleep 10; ./scripts/start_webserver.sh;'''
+    environment:
+      - IP=173.17.0.101
+      - IPS=173.17.0.101,173.17.0.102,173.17.0.103,173.17.0.104
+      - DOCKERHOST=173.17.0.100
+      - LOG_LEVEL=${LOG_LEVEL}
+      - RUST_LOG=${RUST_LOG}
+      - GENESIS_URL=${GENESIS_URL}
+      - ANONYMOUS=${ANONYMOUS}
+      - LEDGER_SEED=${LEDGER_SEED}
+      - LEDGER_CACHE_PATH=${LEDGER_CACHE_PATH}
+      - MAX_FETCH=${MAX_FETCH:-50000}
+      - RESYNC_TIME=${RESYNC_TIME:-120}
+      - REGISTER_NEW_DIDS=${REGISTER_NEW_DIDS:-True}
+      - LEDGER_INSTANCE_NAME=${LEDGER_INSTANCE_NAME:-localhost}
+      - WEB_ANALYTICS_SCRIPT=${WEB_ANALYTICS_SCRIPT}
+      - INFO_SITE_TEXT=${INFO_SITE_TEXT}
+      - INFO_SITE_URL=${INFO_SITE_URL}
+    networks:
+      services:
+        ipv4_address: 173.17.0.100
+    ports:
+      - 9000:8000
+    depends_on:
+      - node1
+      - node2
+      - node3
+      - node4
+    volumes:
+      - ./config:/home/indy/config
+      - ./server:/home/indy/server
+      - webserver-cli:/home/indy/.indy-cli
+      - webserver-ledger:/home/indy/ledger
+      - node1-data:/home/indy/.mnt/node1
+      - node2-data:/home/indy/.mnt/node2
+      - node3-data:/home/indy/.mnt/node3
+      - node4-data:/home/indy/.mnt/node4
+
+  # #
+  # #Synchronization test
+  # #
+  # synctest:
+  #   image: indy-node
+  #   command: 'bash -c ''./scripts/start_synctest.sh'''
+  #   environment:
+  #     - IP=${IP}
+  #     - IPS=${IPS}
+  #     - DOCKERHOST=${DOCKERHOST}
+  #     - LOG_LEVEL=${LOG_LEVEL}
+  #     - RUST_LOG=${RUST_LOG}
+  #   networks:
+  #     - indy-agent-net
+  #   ports:
+  #     - ${WEB_SERVER_HOST_PORT:-9000}:8000
+  #   volumes:
+  #     - ./config:/home/indy/config
+  #     - ./server:/home/indy/server
+  #     - webserver-cli:/home/indy/.indy-cli
+  #     - webserver-ledger:/home/indy/ledger
+
+  #
+  # Nodes
+  #
+
+  # nodes:
+  #   image: indy-node
+  #   command: 'bash -c ''./scripts/start_nodes.sh'''
+  #   networks:
+  #     - indy-agent-net
+  #   ports:
+  #     - 9701:9701
+  #     - 9702:9702
+  #     - 9703:9703
+  #     - 9704:9704
+  #     - 9705:9705
+  #     - 9706:9706
+  #     - 9707:9707
+  #     - 9708:9708
+  #   environment:
+  #     - IP=${IP}
+  #     - IPS=${IPS}
+  #     - DOCKERHOST=${DOCKERHOST}
+  #     - LOG_LEVEL=${LOG_LEVEL}
+  #     - RUST_LOG=${RUST_LOG}
+  #   volumes:
+  #     - nodes-data:/home/indy/ledger
+
+  node1:
+    image: indy-node
+    command: 'bash -c ''./scripts/start_node.sh 1'''
+    networks:
+      services:
+        ipv4_address: 173.17.0.101
+    ports:
+      - 9701:9701
+      - 9702:9702
+    environment:
+      - IP=173.17.0.101
+      - IPS=173.17.0.101,173.17.0.102,173.17.0.103,173.17.0.104
+     # - DOCKERHOST=${DOCKERHOST}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - RUST_LOG=${RUST_LOG}
+    volumes:
+      - node1-data:/home/indy/ledger
+
+  node2:
+    image: indy-node
+    command: 'bash -c ''./scripts/start_node.sh 2'''
+    networks:
+      services:
+        ipv4_address: 173.17.0.102
+    ports:
+      - 9703:9703
+      - 9704:9704
+    environment:
+      - IP=173.17.0.101
+      - IPS=173.17.0.101,173.17.0.102,173.17.0.103,173.17.0.104
+     # - DOCKERHOST=${DOCKERHOST}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - RUST_LOG=${RUST_LOG}
+    volumes:
+      - node2-data:/home/indy/ledger
+
+  node3:
+    image: indy-node
+    command: 'bash -c ''./scripts/start_node.sh 3'''
+    networks:
+      services:
+        ipv4_address: 173.17.0.103
+    ports:
+      - 9705:9705
+      - 9706:9706
+    environment:
+      - IP=173.17.0.101
+      - IPS=173.17.0.101,173.17.0.102,173.17.0.103,173.17.0.104
+     # - DOCKERHOST=${DOCKERHOST}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - RUST_LOG=${RUST_LOG}
+    volumes:
+      - node3-data:/home/indy/ledger
+
+  node4:
+    image: indy-node
+    command: 'bash -c ''./scripts/start_node.sh 4'''
+    networks:
+      services:
+        ipv4_address: 173.17.0.104
+    ports:
+      - 9707:9707
+      - 9708:9708
+    environment:
+      - IP=173.17.0.101
+      - IPS=173.17.0.101,173.17.0.102,173.17.0.103,173.17.0.104
+     # - DOCKERHOST=${DOCKERHOST}
+      - LOG_LEVEL=${LOG_LEVEL}
+      - RUST_LOG=${RUST_LOG}
+    volumes:
+      - node4-data:/home/indy/ledger
+
+  #
+  # Agents
+  #
+  alice:
+    image: indy-agentjs
+    build:
+      context: .
+      dockerfile: agent.dockerfile
+    command: "bash -c 'sleep 10; npm start'"
+    environment:
+      - ICON_SRC=https://maxcdn.icons8.com/Share/icon/Users/person_female1600.png
+      - THEME=DarkGray
+      - PORT=3000
+      - NAME=Alice
+      - EMAIL=alice@faber.edu
+      - PASSWORD=123
+      - USERNAME=alice
+      - PUBLIC_DID_ENDPOINT=173.17.0.150:3000
+      - RUST_LOG=${RUST_LOG}
+      - TEST_POOL_IP=${TEST_POOL_IP}
+    ports:
+      - 3000:3000
+    depends_on:
+      - node1
+      - node2
+      - node3
+      - node4
+    networks:
+      services:
+        ipv4_address: 173.17.0.150
+    volumes:
+      - node1-data:/home/indy/ledger
+
+  #
+  #
+  bob:
+    image: indy-agentjs
+    command: "bash -c 'sleep 10; npm start'"
+    environment:
+      - ICON_SRC=http://www.clker.com/cliparts/g/l/R/7/h/u/teamstijl-person-icon-blue-hi.png
+      - THEME=BurlyWood
+      - PORT=3001
+      - NAME=Bob
+      - EMAIL=bob@byu.edu
+      - PASSWORD=123
+      - USERNAME=bob
+      - PUBLIC_DID_ENDPOINT=173.17.0.160:3001
+      - RUST_LOG=${RUST_LOG}
+      - TEST_POOL_IP=${TEST_POOL_IP}
+    ports:
+      - 3001:3001
+    depends_on:
+      - node1
+      - node2
+      - node3
+      - node4
+      - alice
+    networks:
+      services:
+        ipv4_address: 173.17.0.160
+    volumes:
+      - node1-data:/home/indy/ledger
+
+  faber:
+    image: indy-agentjs
+    command: "bash -c 'sleep 10; npm start'"
+    environment:
+      - ICON_SRC=https://cdn2.iconfinder.com/data/icons/bubble-education-icons-1/360/School-512.png
+      - THEME=OliveDrab
+      - PORT=3002
+      - NAME=Faber College
+      - EMAIL=admin@faber.edu
+      - PASSWORD=123
+      - USERNAME=faber
+      - PUBLIC_DID_ENDPOINT=173.17.0.170:3002
+      - RUST_LOG=${RUST_LOG}
+      - TEST_POOL_IP=${TEST_POOL_IP}
+    ports:
+      - 3002:3002
+    depends_on:
+      - node1
+      - node2
+      - node3
+      - node4
+      - alice
+    networks:
+      services:
+        ipv4_address: 173.17.0.170
+    volumes:
+      - node1-data:/home/indy/ledger
+
+  acme:
+    image: indy-agentjs
+    command: "bash -c 'sleep 10; npm start'"
+    environment:
+      - ICON_SRC=https://i.ytimg.com/vi/JUMufld7UcY/maxresdefault.jpg
+      - THEME=LightSteelBlue
+      - PORT=3003
+      - NAME=Acme Corporation
+      - EMAIL=boss@acme.com
+      - PASSWORD=123
+      - USERNAME=acme
+      - PUBLIC_DID_ENDPOINT=173.17.0.180:3003
+      - RUST_LOG=${RUST_LOG}
+      - TEST_POOL_IP=${TEST_POOL_IP}
+    ports:
+      - 3003:3003
+    depends_on:
+      - node1
+      - node2
+      - node3
+      - node4
+      - alice
+    networks:
+      services:
+        ipv4_address: 173.17.0.180
+    volumes:
+      - node1-data:/home/indy/ledger
+
+  thrift:
+    image: indy-agentjs
+    command: "bash -c 'sleep 10; npm start'"
+    environment:
+      - ICON_SRC=http://www.psdgraphics.com/file/bank-building-icon.jpg
+      - THEME=Coral
+      - PORT=3004
+      - NAME=Thrift Bank
+      - EMAIL=owner@thrift.com
+      - PASSWORD=123
+      - USERNAME=thrift
+      - PUBLIC_DID_ENDPOINT=173.17.0.190:3004
+      - RUST_LOG=${RUST_LOG}
+      - TEST_POOL_IP=${TEST_POOL_IP}
+    ports:
+      - 3004:3004
+    depends_on:
+      - node1
+      - node2
+      - node3
+      - node4
+      - alice
+    networks:
+      services:
+        ipv4_address: 173.17.0.190
+    volumes:
+      - node1-data:/home/indy/ledger
+
+volumes:
+  client-data:
+  webserver-cli:
+  webserver-ledger:
+  node1-data:
+  node2-data:
+  node3-data:
+  node4-data:
