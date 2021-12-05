@@ -1,6 +1,7 @@
 'use strict';
 const sdk = require('indy-sdk');
 const indy = require('../../index.js');
+const { getEndpointDid } = require('../did/index.js');
 
 const MESSAGE_TYPES = {
     REQUEST : "urn:sovrin:agent:message_type:sovrin.org/proof_request",
@@ -12,8 +13,11 @@ exports.MESSAGE_TYPES = MESSAGE_TYPES;
 exports.handlers = require('./handlers');
 
 let proofRequests;
+let endpointDid;
 
 exports.getProofRequests = async function(force) {
+    endpointDid = await getEndpointDid();
+    console.log("The endpoint did in proofs:", endpointDid);
     if(force || !proofRequests) {
         proofRequests = {};
         proofRequests['General-Identity'] = {
@@ -27,28 +31,56 @@ exports.getProofRequests = async function(force) {
             },
             requested_predicates: {}
         };
-        let transcriptCredDef = await indy.issuer.getCredDefByTag('MyTranscript');
-        if(transcriptCredDef) {
-            proofRequests['Transcript-Data'] = {
-                name: 'Transcript-Data',
-                version: '0.1',
-                requested_attributes: {
-                    'attr1_referent': {
-                        'name': 'degree',
-                        'restrictions': [{'cred_def_id': transcriptCredDef.id}]
-                    },
-                    'attr2_referent': {
-                        'name': 'status',
-                        'restrictions': [{'cred_def_id': transcriptCredDef.id}]
-                    },
-                    'attr3_referent': {
-                        'name': 'year',
-                        'restrictions': [{'cred_def_id': transcriptCredDef.id}]
+
+        let metadata = await sdk.getDidMetadata(await indy.wallet.get(), endpointDid);
+        metadata = JSON.parse(metadata);
+        let credentialDefinitions = metadata['credential_definitions'];
+        console.log("Metadata in proofs:", metadata);
+        for(let credentialDefinition of credentialDefinitions){
+            let requested_attributes_v = {};
+            let i = 0;
+            let j = 1;
+            while(i<Object.keys(credentialDefinition.value.primary.r).length){
+                if(Object.keys(credentialDefinition.value.primary.r)[i] != 'master_secret'){
+                    requested_attributes_v[`attr${j}_referent`] = {
+                        'name': Object.keys(credentialDefinition.value.primary.r)[i],
+                        'restrictions' : [{'cred_def_id': credentialDefinition.id}]
                     }
-                },
-                requested_predicates: {}
+                    j++;
+                    i++;
+                }
+                else {i++;}
             }
-        }
+            proofRequests[credentialDefinition.tag] = {
+                name: credentialDefinition.tag,
+                version : credentialDefinition.ver,
+                requested_attributes: requested_attributes_v,
+                requested_predicates : {}
+            }
+        }        
+        // let transcriptCredDef = await indy.issuer.getCredDefByTag('MyTranscript');
+        // if(transcriptCredDef) {
+
+        //     proofRequests['Transcript-Data'] = {
+        //         name: 'Transcript-Data',
+        //         version: '0.1',
+        //         requested_attributes: {
+        //             'attr1_referent': {
+        //                 'name': 'firstname',
+        //                 'restrictions': [{'cred_def_id': transcriptCredDef.id}]
+        //             },
+        //             'attr2_referent': {
+        //                 'name': 'lastname',
+        //                 'restrictions': [{'cred_def_id': transcriptCredDef.id}]
+        //             },
+        //             'attr3_referent': {
+        //                 'name': 'degree',
+        //                 'restrictions': [{'cred_def_id': transcriptCredDef.id}]
+        //             }
+        //         },
+        //         requested_predicates: {}
+        //     }
+        // }
     }
     return proofRequests;
 };
@@ -77,6 +109,7 @@ exports.prepareRequest = async function(message) {
     let pairwise = await indy.pairwise.get(message.origin);
     let proofRequest = await indy.crypto.authDecrypt(pairwise.my_did, message.message);
     let credsForProofRequest = await sdk.proverGetCredentialsForProofReq(await indy.wallet.get(), proofRequest);
+    console.log("Credentials for proof request:",JSON.stringify(credsForProofRequest));
     let credsForProof = {};
     for(let attr of Object.keys(proofRequest.requested_attributes)) {
         credsForProof[`${credsForProofRequest['attrs'][attr][0]['cred_info']['referent']}`] = credsForProofRequest['attrs'][attr][0]['cred_info'];
@@ -142,7 +175,9 @@ exports.validateAndStoreProof = async function(message) {
 };
 
 exports.validate = async function(proof) {
+    //console.log("Proof in indy/proofs:", proof.requested_proofs.revealed_attrs);
     let [schemas, credDefs, revRegDefs, revRegs] = await indy.pool.verifierGetEntitiesFromLedger(proof.identifiers);
+    //console.log("This is the proof response:",await sdk.verifierVerifyProof(proof.request, proof, schemas, credDefs, revRegDefs, revRegs) );
     return await sdk.verifierVerifyProof(proof.request, proof, schemas, credDefs, revRegDefs, revRegs);
 };
 

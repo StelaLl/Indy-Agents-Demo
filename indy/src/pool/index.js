@@ -117,6 +117,7 @@ exports.verifierGetEntitiesFromLedger = async function(identifiers) {
 
     for(let referent of Object.keys(identifiers)) {
         let item = identifiers[referent];
+        //console.log("This is the item", item);
         let receivedSchema = await indy.issuer.getSchema(item['schema_id']);
         schemas[receivedSchema.id] = receivedSchema;
 

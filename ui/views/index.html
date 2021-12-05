@@ -73,7 +73,7 @@
 
     </div>
     <div id="issuing" class="tab" style="display:none;">
-        <div class="w3-container w3-card w3-padding w3-margin" style="float: left;width: 31%">
+        <div class="w3-container w3-card w3-padding w3-margin" style="float: left;width: 31%; height: 100%;">
             <h3>Create Schema: </h3>
             <form method="POST" action="/api/issuer/create_schema">
                 <label>Name of Schema: </label>
@@ -97,10 +97,10 @@
             </form>
         </div>
 
-        <div style="float: left;width: 31%">
+        <div style="float: left;width: 31%;height: 100%">
             <div class="w3-container w3-card w3-padding w3-margin">
                 <h3>Create Credential Definition</h3>
-                <form method="POST" action="/api/issuer/create_cred_def">
+                <form method="POST" action="/api/issuer/fill_in_cred">
                     <label>Select a Schema:</label>
                     <select class="w3-select" name="schema_id" required>
                         <%for(let schema of schemas) {%>

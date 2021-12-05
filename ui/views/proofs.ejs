@@ -14,7 +14,7 @@
                     <%for(let pr of Object.keys(proofRequests)) {%>
                     <option value="<%=pr%>"><%=pr%></option>
                     <%}%>
-                    <option value="proofRequestOther">Other (Paste Proof Request Here) --></option>
+                    <option value="proofRequestOther">Paste Custom Proof Request</option>
                 </select>
                 <br><br>
                 <input class="w3-btn w3-white w3-border" type="submit">
@@ -22,6 +22,7 @@
         </div>
         <div class="w3-half">
             <%for(let pr of Object.keys(proofRequests)) {%>
+                
                 <div id="<%=proofRequests[pr].name%>" class="proofRequestsClass" style="width:100%;display:none;">
                     <textarea style="width:100%;" rows="20" readonly><%=proofRequests[pr].string%></textarea>
                 </div>

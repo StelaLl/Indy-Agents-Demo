@@ -12,4 +12,5 @@ ADD --chown=indy:indy . $HOME
 
 RUN mkdir -p \
     $HOME/cli-scripts \
-    && chmod -R ug+rw $HOME/cli-scripts
+    && chmod -R ug+rw $HOME/cli-scripts \
+    && chmod +x scripts/* bin/von_generate_transactions

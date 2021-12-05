@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const indy = require('../../indy/index');
 const auth = require('../authentication');
+const issuer = require('../../indy/src/issuer/index');
+
 
 router.get('/', function (req, res, next) {
     res.send("Success");
@@ -18,8 +20,8 @@ router.post('/send_message', auth.isLoggedIn, async function (req, res) {
 router.post('/send_connection_request', auth.isLoggedIn, async function (req, res) {
     let theirEndpointDid = req.body.did;
     let connectionRequest = await indy.connections.prepareRequest(theirEndpointDid);
-    console.log("This is the connection request", connectionRequest);
-    console.log("S: This is their endpoint",theirEndpointDid);
+    // console.log("This is the connection request", connectionRequest);
+    // console.log("S: This is their endpoint",theirEndpointDid);
     await indy.crypto.sendAnonCryptedMessage(theirEndpointDid, connectionRequest);
     res.redirect('/#relationships');
 });
@@ -35,9 +37,16 @@ router.post('/issuer/create_cred_def', auth.isLoggedIn, async function (req, res
 });
 
 router.post('/issuer/send_credential_offer', auth.isLoggedIn, async function (req, res) {
-    await indy.credentials.sendOffer(req.body.their_relationship_did, req.body.cred_def_id);
+    await indy.credentials.sendOffer(req.body.their_relationship_did, req.body.cred_def_id, req.body.attribute_value);
     res.redirect('/#issuing');
 });
+
+// router.post('/issuer/fill_in_cred', auth.isLoggedIn, async function(req,res){
+//      console.log(await indy.pool.get());
+     
+//      console.log(await indy.issuer.getSchema(req.body.schema_id));
+//      res.redirect('/#issuing')
+// })
 
 router.post('/credentials/accept_offer', auth.isLoggedIn, async function(req, res) {
     let message = indy.store.messages.getMessage(req.body.messageId);

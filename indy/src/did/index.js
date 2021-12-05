@@ -69,6 +69,15 @@ exports.pushEndpointDidAttribute = async function (attribute, item) {
 exports.getEndpointDidAttribute = async function (attribute) {
     let metadata = await sdk.getDidMetadata(await indy.wallet.get(), endpointDid);
     metadata = JSON.parse(metadata);
+    let credentialDefinitions = metadata['credential_definitions'];
+    console.log("Number of credential definitions: ", credentialDefinitions.length);
+    for (let i of credentialDefinitions){
+        console.log("The credential definition: ", i);
+        console.log("Number of attributes:", Object.keys(i.value.primary.r).length);
+        
+        console.log("This is the first attribute: ",Object.keys(i.value.primary.r)[0]);
+        
+    }
     return metadata[attribute];
 };
 

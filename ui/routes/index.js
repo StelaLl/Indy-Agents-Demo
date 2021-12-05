@@ -35,6 +35,18 @@ router.get('/', auth.isLoggedIn, async function (req, res) {
 
     let credentials = await indy.credentials.getAll();
     let relationships = await indy.pairwise.getAll();
+    
+    console.log(proofRequests);
+
+    let attrib = "";
+    try{
+        attrib = (await indy.issuer.getSchemas())[0]["attrNames"];
+        
+    } catch(e) {
+        attrib = "";
+    }
+
+    
 
     res.render('index', {
         messages: messages,
@@ -42,6 +54,7 @@ router.get('/', auth.isLoggedIn, async function (req, res) {
         relationships: relationships,
         credentials: credentials,
         schemas: await indy.issuer.getSchemas(),
+        one_schema: attrib,
         credentialDefinitions: await indy.did.getEndpointDidAttribute('credential_definitions'),
         endpointDid: await indy.did.getEndpointDid(),
         proofRequests: proofRequests,
